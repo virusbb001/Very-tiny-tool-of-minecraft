@@ -1,0 +1,16 @@
+doctype html
+html
+  head
+    title Select Profile
+  body
+    form action="/show" method="GET" 
+      label for="name"
+        | Select Profile
+      select name="name" 
+        - @profiles["profiles"].each do |key,value|
+          option value="#{key}"
+            = value["name"]
+      button type="send"
+        | Go
+    div
+      | When you're using Google Chrome, use option `--allow-file-access-from-files`

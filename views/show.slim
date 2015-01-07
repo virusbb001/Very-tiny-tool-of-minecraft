@@ -1,0 +1,25 @@
+doctype html
+html
+  head
+    title = "Profile #{params[:name]}"
+  body
+    ul
+      li 
+        = "Name: #{@profile["name"]}"
+      - if @profile["lastVersionId"]
+        li
+          = "Minecraft Version: #{@profile["lastVersionId"]}"
+      - if @profile.key?("gameDir")
+        li
+          | Game Directory :
+          a href="file://#{@profile["gameDir"]}"
+            = @profile["gameDir"]
+      - if @profile.key?("javaArgs")
+        li
+          | Java Arguments :
+          code
+            = @profile["javaArgs"]
+      - if @profile.key?("gameDir") && FileTest.directory?("#{@profile["gameDir"]}/mods")
+        li
+          | This profiles has mod.
+
