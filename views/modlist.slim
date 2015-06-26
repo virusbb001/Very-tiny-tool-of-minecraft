@@ -1,0 +1,16 @@
+doctype html
+html
+  head
+    title Mod List
+  body
+    ul
+      - @modfiles.each do |filename|
+        li
+          | #{filename}
+          - if FileTest::directory?("#{@moddir.path}/#{filename}")
+            | /
+            ul
+              - Dir::entries("#{@moddir.path}/#{filename}").each do |file|
+                - unless file=~/^\.{1,2}$/
+                  li 
+                    = file

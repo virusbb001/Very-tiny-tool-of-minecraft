@@ -3,11 +3,11 @@ html
   head
     title Select Profile
   body
-    form action="/show" method="GET" 
+    form action="/profile" method="GET" 
       label for="name"
         | Select Profile
       select name="name" 
-        - @profiles["profiles"].each do |key,value|
+        - @profiles["profiles"].sort.each do |key,value|
           option value="#{key}"
             = value["name"]
       button type="send"

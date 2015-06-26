@@ -1,0 +1,13 @@
+doctype html
+html
+  head
+    title Config
+  body
+    - unless File.exist?(@optionfile)
+      | File is not exist.
+    ul
+    - @options.each do |key,value|
+      - if key =~ /key/
+        li
+          | #{key} => #{value}
+

@@ -22,4 +22,6 @@ html
       - if @profile.key?("gameDir") && FileTest.directory?("#{@profile["gameDir"]}/mods")
         li
           | This profiles has mod.
+          a href="/modlist?name=#{params[:name]}"
+            | Click here to list.
 
