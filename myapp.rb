@@ -1,8 +1,9 @@
 #!/usr/bin/env ruby
-#
+
 require 'sinatra'
 require 'sinatra/reloader'
 require 'json'
+require 'sinatra/json'
 require 'slim'
 require 'pp'
 
@@ -59,9 +60,53 @@ get '/options' do
       end
       slim :options
     else
-      slim:error, locals: {error_mes: "File not found: #{@optionfile}" }
+      slim :error, locals: {error_mes: "File not found: #{@optionfile}" }
     end
   else
     slim :error, locals: {error_mes: "Not found such profile: #{params[:name]}"}
+  end
+end
+
+get '/options_key.?:format?' do
+  send_data={}
+
+  if profiles["profiles"].key?(params[:name])
+    @profile=profiles["profiles"][params[:name]]
+    @gamedir=@profile["gameDir"] || MinecraftHome
+    @optionfile= @gamedir + "/options.txt"
+    @options={}
+    if File.exist?(@optionfile)
+      File.open(@optionfile,"r") do |file|
+        file.each_line do |line|
+          key,value = line.chomp.split(":")
+          if key=~/key/
+            keys=key.split('.')
+            data=send_data
+            last_data=nil
+            for var in keys do
+              if data[var] == nil
+                data[var]={}
+              end
+              last_data=data
+              data=data[var]
+            end
+            last_data[keys.last]=value
+          end
+        end
+      end
+      slim :options
+    else
+      send_data["error"]="File not found: #{@optionfile}"
+    end
+  else
+    send_data["error"]= "Not found such profile: #{params[:name]}"
+  end
+
+  if params[:format] == "json"
+    json send_data
+  elsif send_data["error"] == nil
+    slim :options_key
+  else
+    slim :error, locals: {error_mes: send_data["error"] }
   end
 end
