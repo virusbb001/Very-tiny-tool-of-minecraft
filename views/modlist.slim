@@ -2,15 +2,8 @@ doctype html
 html
   head
     title Mod List
+    /script type="text/javascript" src="http://code.jquery.com/jquery-2.1.4.js"
+    script type="text/javascript" src="jquery.js"
+    script type="text/javascript" src="modlist.js"
   body
-    ul
-      - @modfiles.each do |filename|
-        li
-          | #{filename}
-          - if FileTest::directory?("#{@moddir.path}/#{filename}")
-            | /
-            ul
-              - Dir::entries("#{@moddir.path}/#{filename}").each do |file|
-                - unless file=~/^\.{1,2}$/
-                  li 
-                    = file
+    ul#mod_list

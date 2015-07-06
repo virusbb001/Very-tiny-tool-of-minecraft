@@ -6,6 +6,7 @@ require 'json'
 require 'sinatra/json'
 require 'slim'
 require 'pp'
+require 'zip'
 
 configure :production do
   enable :reloader
@@ -31,17 +32,53 @@ get '/profile' do
   end
 end
 
-get '/modlist' do
-  if profiles["profiles"].key?(params[:name])
-    @profile=profiles["profiles"][params[:name]]
-    if @profile.key?("gameDir") && FileTest.directory?("#{@profile["gameDir"]}/mods")
-      slim :error, locals: {error_mes: "This profile doesn't have mod dir: #{params[:name]}"}
-    end
-    @moddir=Dir.new("#{@profile["gameDir"]}/mods")
-    @modfiles=@moddir.each.drop_while { |i| i=~/^\.{1,2}$/ }
+get '/modlist.?:format?' do
+  if params[:format] != "json"
     slim :modlist
   else
-    slim :error, locals: {error_mes: "Not found such profile: #{params[:name]}"}
+    send_data={}
+    if profiles["profiles"].key?(params[:name])
+      gen_infos = lambda do |dirname|
+        infos={}
+        modfiles=Dir.new(dirname).each.drop_while{ |i| i =~ /^\.{1,2}$/}
+        modfiles.each do |filename|
+          name=dirname+"/"+filename
+          if FileTest.directory?(name)
+            infos[filename+"/"]=gen_infos.call(name)
+          else
+            if name !~ /\.(jar|zip)$/
+              next
+            end
+            Zip::File.open(name) do |zipfile|
+              if zipfile.find_entry('mcmod.info')
+                modinfo_text=zipfile.read('mcmod.info').gsub(/(\r\n|\r|\n)/,"")
+                if(modinfo_text.encoding !=Encoding::UTF_8)
+                  modinfo_text.force_encoding("Shift_JIS").encode!("UTF-8")
+                end
+                begin
+                  infos[filename]=JSON.load(modinfo_text)
+                rescue => ex
+                  next
+                end
+              else
+                infos[filename]=nil
+              end
+            end
+          end
+        end
+        return infos
+      end
+      @modinfos=[]
+      @profile=profiles["profiles"][params[:name]]
+      unless @profile.key?("gameDir") && FileTest.directory?("#{@profile["gameDir"]}/mods")
+        send_data["error"]="This profile doesn't have mod dir: #{params[:name]}<br>#{@profile["gameDir"]}"
+      end
+      moddir_name=(@profile["gameDir"] || MinecraftHome)+"/mods"
+      send_data=gen_infos.call(moddir_name)
+    else
+      send_data["error"]= "Not found such profile: #{params[:name]}"
+    end
+    json send_data
   end
 end
 
